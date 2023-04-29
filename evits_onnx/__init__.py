@@ -1,1 +1,1 @@
-from model import Synthesizer
+from .model import Synthesizer

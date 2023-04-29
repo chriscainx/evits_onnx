@@ -1,7 +1,7 @@
 import numpy as np
 import onnxruntime as ort
 from importlib.resources import files
-from txtdecoder import text_to_interspersed_sequence
+from .txtdecoder import text_to_interspersed_sequence
 
 class Synthesizer:
     """
@@ -10,13 +10,13 @@ class Synthesizer:
 
     def __init__(self, dec_path=None, dp_path=None, enc_p_path=None, flow_path=None):
         if dec_path is None:
-            dec_path = files("evits_onnx").joinpath("dec.onnx")
+            dec_path = str(files("evits_onnx").joinpath("dec.onnx"))
         if dp_path is None:
-            dp_path = files("evits_onnx").joinpath("dp.onnx")
+            dp_path = str(files("evits_onnx").joinpath("dp.onnx"))
         if enc_p_path is None:
-            enc_p_path = files("evits_onnx").joinpath("enc_p.onnx")
+            enc_p_path = str(files("evits_onnx").joinpath("enc_p.onnx"))
         if flow_path is None:
-            flow_path = files("evits_onnx").joinpath("flow.onnx")
+            flow_path = str(files("evits_onnx").joinpath("flow.onnx"))
         self.dec = ort.InferenceSession(dec_path)
         self.dp = ort.InferenceSession(dp_path)
         self.enc_p = ort.InferenceSession(enc_p_path)
