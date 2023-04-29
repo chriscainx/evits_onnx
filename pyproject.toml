@@ -1,0 +1,23 @@
+[project]
+name = "evits_onnx"
+version = "0.1"
+dependencies = ["numpy", "onnxruntime", "cn2an", "jieba", "pypinyin"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry]
+name = "evits_onnx"
+authors = ["Chris Kang <kbxchrs@gmail.com>"]
+version = "0.1"
+description = "A simple onnx wrapper."
+keywords = ["onnx"]
+homepage = "https://github.com/chriscainx/evits_onnx"
+repository = "https://github.com/chriscainx/evits_onnx.git"
+
+[tool.setuptools]
+packages = ["evits_onnx"]
+
+[tool.setuptools.package-data]
+mypkg = ["*.onnx"]

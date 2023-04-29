@@ -1,0 +1,12 @@
+# Ignore MacOS resource files
+.DS_Store
+
+# Ignore build and distribution files
+build/
+dist/
+*.egg-info/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+__pycache__/
