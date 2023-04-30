@@ -21,8 +21,8 @@ symbols_filter = re.compile(f"[^{symbols_joined}]")
 # Special symbol ids
 SPACE_ID = symbols.index(" ")
 
-# define a regular expression to match emoji symbols
-emoji_pattern = re.compile(
+# replace emoji symbols and full stop symbols
+period_pattern = re.compile(
     # Match Unicode block for emoticons and miscellaneous symbols
     '['
     '\U0001F300-\U0001F5FF'
@@ -44,10 +44,14 @@ emoji_pattern = re.compile(
     '\U0001F1E6-\U0001F1FF'
     # Match Unicode block for dingbats
     '\U00002700-\U000027BF'
+    # Match full stop symbols
+    '；“”()<>《》「」【】'
     ']',
     flags=re.UNICODE
 )
 
+# replace half stop symbols
+comma_pattern = re.compile("[、：]")
 
 # chinese char
 chin_pattern = re.compile('[\u4e00-\u9fff]')
@@ -96,8 +100,8 @@ def number_to_chinese(text):
 
 def chinese_to_bopomofo(text):
     # replace all emoji symbols with a comma
-    text = emoji_pattern.sub("，", text)
-    text = text.replace('、', '，').replace('；', '，').replace('：', '，')
+    text = period_pattern.sub("。", text)
+    text = comma_pattern.sub("，", text)
     words = jieba.lcut(text, cut_all=False)
     text = ''
     for word in words:
@@ -126,9 +130,15 @@ def chinese_cleaners(text):
     text = symbols_filter.sub("", text)
     return text
 
-def text_to_interspersed_sequence(text):
-    clean_text = chinese_cleaners(text)
+def clean_text_to_interspersed_sequence(clean_text):
     sequence = [0] * (len(clean_text) * 2 + 1)
     sequence[1::2] = [symbols_to_index[char] for char in clean_text]
     return sequence
 
+def text_to_sequence(text, max_length=20):
+    clean_text = chinese_cleaners(text)
+    if len(clean_text) <= max_length:
+        return [clean_text_to_interspersed_sequence(clean_text)]
+    # Split text into sentences using regex pattern for Chinese punctuation
+    sentences = re.split('[。？！]', clean_text)
+    return [clean_text_to_interspersed_sequence(sentence) for sentence in sentences if sentence]

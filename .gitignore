@@ -10,3 +10,4 @@ dist/
 *.pyc
 *.pyo
 __pycache__/
+test.ipynb

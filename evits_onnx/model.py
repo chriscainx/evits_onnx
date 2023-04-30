@@ -1,7 +1,7 @@
 import numpy as np
 import onnxruntime as ort
 from importlib.resources import files
-from .txtdecoder import text_to_interspersed_sequence
+from .txtdecoder import text_to_sequence
 
 class Synthesizer:
     """
@@ -21,6 +21,7 @@ class Synthesizer:
         self.dp = ort.InferenceSession(dp_path)
         self.enc_p = ort.InferenceSession(enc_p_path)
         self.flow = ort.InferenceSession(flow_path)
+        self.break_length = 20
         np.float = np.float32
 
     def _sequence_mask(self, length, max_length=None):
@@ -46,14 +47,9 @@ class Synthesizer:
         path = np.expand_dims(path, 1).transpose(0, 1, 3, 2) * mask
         return path.astype(mask.dtype)
 
-    def tts(self, txt, emo):
-        np.float = np.float32
-        noise_scale = 0.667
-        length_scale = 1
-        noise_scale_w = 0.8
-        max_len = None
-        x = np.array(text_to_interspersed_sequence(txt))[np.newaxis, :]
-        x_lengths = np.array([x.shape[1]])
+    def infer(self, seq, emo, noise_scale=0.667, length_scale=1, noise_scale_w=0.8, max_len=None):
+        x = np.array(seq)[np.newaxis, :]
+        x_lengths = np.array([len(seq)])
 
         x, m_p, logs_p, x_mask = self.enc_p.run(
             None, {"x": x, "x_lengths": x_lengths, "emotion": emo}
@@ -97,4 +93,9 @@ class Synthesizer:
         z_in = (z * y_mask)[:, :, :max_len]
 
         o = self.dec.run(None, {"z_in": z_in})[0]
-        return o[0, 0]
+        return o[0,0]
+    
+    def tts(self, text, emotion):
+        seqs = text_to_sequence(text, max_length=self.break_length)
+        audios = [self.infer(seq=seq, emo=emotion) for seq in seqs]
+        return np.concatenate(audios, axis=0)
