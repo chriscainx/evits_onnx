@@ -3,6 +3,7 @@ import onnxruntime as ort
 from importlib.resources import files
 from .txtdecoder import text_to_sequence
 
+
 class Synthesizer:
     """
     Synthesizer
@@ -22,7 +23,6 @@ class Synthesizer:
         self.enc_p = ort.InferenceSession(enc_p_path)
         self.flow = ort.InferenceSession(flow_path)
         self.break_length = 20
-        np.float = np.float32
 
     def _sequence_mask(self, length, max_length=None):
         if max_length is None:
@@ -47,41 +47,40 @@ class Synthesizer:
         path = np.expand_dims(path, 1).transpose(0, 1, 3, 2) * mask
         return path.astype(mask.dtype)
 
-    def infer(self, seq, emo, noise_scale=0.667, length_scale=1, noise_scale_w=0.8, max_len=None):
-        x = np.array(seq)[np.newaxis, :]
+    def infer(
+        self,
+        seq,
+        emo,
+        noise_scale=0.667,
+        length_scale=1,
+        noise_scale_w=0.8
+    ):
+        x = np.array(seq, dtype=np.int64)[np.newaxis, :]
         x_lengths = np.array([len(seq)])
 
         x, m_p, logs_p, x_mask = self.enc_p.run(
-            None, {"x": x, "x_lengths": x_lengths, "emotion": emo}
+            None, {"x": x, "x_lengths": x_lengths, "emotion": emo.astype(np.float32)}
         )
         zinput = (
             np.random.randn(x.shape[0], 2, x.shape[2]).astype(np.float32)
             * noise_scale_w
         )
 
-        logw = self.dp.run(None, {"x": x, "x_mask": x_mask, "zin": zinput})[
-            0
-        ]
+        logw = self.dp.run(None, {"x": x, "x_mask": x_mask, "zin": zinput})[0]
         w = np.exp(logw) * x_mask * length_scale
-        w_ceil = np.ceil(w)
-        y_lengths = np.clip(np.sum(w_ceil, axis=(1, 2)), a_min=1, a_max=None).astype(
-            np.int64
-        )
-        y_mask = self._sequence_mask(y_lengths, None)[:, np.newaxis].astype(
-            x_mask.dtype
-        )
+        w_ceil = np.ceil(w).astype(np.int64)
+        y_lengths = np.clip(np.sum(w_ceil, axis=(1, 2)), a_min=1, a_max=None)
+        y_mask = self._sequence_mask(y_lengths, None)[:, np.newaxis].astype(np.float32)
         attn_mask = np.expand_dims(x_mask, axis=2) * np.expand_dims(y_mask, axis=-1)
         attn = self._generate_path(w_ceil, attn_mask)
 
         attn_squeezed = np.squeeze(attn, axis=1)  # [b, 1, t, t] -> [b, t, t]
         m_p_t = np.transpose(m_p, axes=(0, 2, 1))  # [b, t, d] -> [b, d, t]
-        m_p = np.matmul(attn_squeezed, m_p_t).transpose(
-            0, 2, 1
-        )  # [b, t', t], [b, t, d] -> [b, d, t']
+        # [b, t', t], [b, t, d] -> [b, d, t']
+        m_p = np.matmul(attn_squeezed, m_p_t).transpose(0, 2, 1)
         logs_p_t = np.transpose(logs_p, axes=(0, 2, 1))  # [b, t, d] -> [b, d, t]
-        logs_p = np.matmul(attn_squeezed, logs_p_t).transpose(
-            0, 2, 1
-        )  # [b, t', t], [b, t, d] -> [b, d, t']
+        # [b, t', t], [b, t, d] -> [b, d, t']
+        logs_p = np.matmul(attn_squeezed, logs_p_t).transpose(0, 2, 1)
         z_p = (
             m_p
             + np.random.randn(*m_p.shape).astype(np.float32)
@@ -90,11 +89,11 @@ class Synthesizer:
         )
 
         z = self.flow.run(None, {"z_p": z_p, "y_mask": y_mask})[0]
-        z_in = (z * y_mask)[:, :, :max_len]
+        z_in = (z * y_mask)
 
         o = self.dec.run(None, {"z_in": z_in})[0]
-        return o[0,0]
-    
+        return o[0, 0]
+
     def tts(self, text, emotion):
         seqs = text_to_sequence(text, max_length=self.break_length)
         audios = [self.infer(seq=seq, emo=emotion) for seq in seqs]
