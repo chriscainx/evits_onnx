@@ -9,19 +9,16 @@ class Synthesizer:
     Synthesizer
     """
 
-    def __init__(self, dec_path=None, dp_path=None, enc_p_path=None, flow_path=None):
-        if dec_path is None:
-            dec_path = str(files("evits_onnx").joinpath("dec.onnx"))
-        if dp_path is None:
-            dp_path = str(files("evits_onnx").joinpath("dp.onnx"))
+    def __init__(self, enc_p_path=None, dp_path=None, flow_dec_path=None):
         if enc_p_path is None:
             enc_p_path = str(files("evits_onnx").joinpath("enc_p.onnx"))
-        if flow_path is None:
-            flow_path = str(files("evits_onnx").joinpath("flow.onnx"))
-        self.dec = ort.InferenceSession(dec_path)
+        if dp_path is None:
+            dp_path = str(files("evits_onnx").joinpath("dp.onnx"))
+        if flow_dec_path is None:
+            flow_dec_path = str(files("evits_onnx").joinpath("flow_dec.onnx"))
         self.dp = ort.InferenceSession(dp_path)
         self.enc_p = ort.InferenceSession(enc_p_path)
-        self.flow = ort.InferenceSession(flow_path)
+        self.flow_dec = ort.InferenceSession(flow_dec_path)
         self.break_length = 20
 
     def _sequence_mask(self, length, max_length=None):
@@ -88,10 +85,7 @@ class Synthesizer:
             * noise_scale
         )
 
-        z = self.flow.run(None, {"z_p": z_p, "y_mask": y_mask})[0]
-        z_in = (z * y_mask)
-
-        o = self.dec.run(None, {"z_in": z_in})[0]
+        o = self.flow_dec.run(None, {"z_p": z_p, "y_mask": y_mask})[0]
         return o[0, 0]
 
     def tts(self, text, emotion):
