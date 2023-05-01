@@ -23,6 +23,7 @@ class Synthesizer:
         self.enc_p = ort.InferenceSession(enc_p_path)
         self.flow = ort.InferenceSession(flow_path)
         self.break_length = 20
+        self.voices = np.load(str(files("evits_onnx").joinpath("voices.npy")))
 
     def _sequence_mask(self, length, max_length=None):
         if max_length is None:
@@ -94,7 +95,9 @@ class Synthesizer:
         o = self.dec.run(None, {"z_in": z_in})[0]
         return o[0, 0]
 
-    def tts(self, text, emotion):
+    def tts(self, text, emotion=None, voice=0):
         seqs = text_to_sequence(text, max_length=self.break_length)
+        if emotion is None:
+            emotion = self.voices[voice]
         audios = [self.infer(seq=seq, emo=emotion) for seq in seqs]
         return np.concatenate(audios, axis=0)

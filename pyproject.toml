@@ -20,4 +20,4 @@ repository = "https://github.com/chriscainx/evits_onnx.git"
 packages = ["evits_onnx"]
 
 [tool.setuptools.package-data]
-evits_onnx = ["*.onnx"]
+evits_onnx = ["*.onnx", "*.npy"]
