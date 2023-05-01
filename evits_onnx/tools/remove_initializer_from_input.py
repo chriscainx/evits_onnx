@@ -16,7 +16,9 @@ def remove_initializer_from_input():
 
     model = onnx.load(args.input)
     if model.ir_version < 4:
-        print("Model with ir_version below 4 requires to include initilizer in graph input")
+        print(
+            "Model with ir_version below 4 requires to include initilizer in graph input"
+        )
         return
 
     inputs = model.graph.input
