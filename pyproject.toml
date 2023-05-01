@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 [tool.poetry]
 name = "evits_onnx"
 authors = ["Chris Kang <kbxchrs@gmail.com>"]
-version = "0.1"
+version = "0.2"
 description = "A simple onnx wrapper."
 keywords = ["onnx"]
 homepage = "https://github.com/chriscainx/evits_onnx"
