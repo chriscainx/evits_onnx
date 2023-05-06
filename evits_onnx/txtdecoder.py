@@ -18,6 +18,9 @@ symbols_to_index = {char: index for index, char in enumerate(symbols)}
 # remove unexpected symbols from text
 symbols_filter = re.compile(f"[^{symbols_joined}]")
 
+# redundant symbols filter
+red_symbols_filter = re.compile('[' + _punctuation + ']{2,}')
+
 # Special symbol ids
 SPACE_ID = symbols.index(" ")
 
@@ -128,6 +131,7 @@ def chinese_cleaners(text):
     text = latin_to_bopomofo(text)
     text = no_end_pattern.sub(r'\1。', text)
     text = symbols_filter.sub("", text)
+    text = red_symbols_filter.sub("。", text)
     return text
 
 def clean_text_to_interspersed_sequence(clean_text):
@@ -137,8 +141,10 @@ def clean_text_to_interspersed_sequence(clean_text):
 
 def text_to_sequence(text, max_length=20):
     clean_text = chinese_cleaners(text)
-    if len(clean_text) <= max_length:
+    """if len(clean_text) <= max_length:
         return [clean_text_to_interspersed_sequence(clean_text)]
     # Split text into sentences using regex pattern for Chinese punctuation
     sentences = re.split('[。？！]', clean_text)
     return [clean_text_to_interspersed_sequence(sentence) for sentence in sentences if sentence]
+    """
+    return [clean_text_to_interspersed_sequence(clean_text)]
