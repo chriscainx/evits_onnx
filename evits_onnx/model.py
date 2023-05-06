@@ -1,6 +1,6 @@
 import numpy as np
 import onnxruntime as ort
-from importlib.resources import files
+from importlib_resources import files
 from .txtdecoder import text_to_sequence
 
 

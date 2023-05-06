@@ -1,7 +1,7 @@
 [project]
 name = "evits_onnx"
 version = "0.1"
-dependencies = ["numpy", "onnxruntime", "cn2an", "jieba", "pypinyin"]
+dependencies = ["numpy", "onnxruntime", "cn2an", "jieba", "pypinyin", "importlib-resources"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
